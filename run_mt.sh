@@ -14,16 +14,21 @@ echo "CUDA visible devices: $CUDA_VISIBLE_DEVICES"
 module load cuda/12.4.0
 
 # Go to your project directory
-cd $PROJECT/llmsys_hw3
+cd llmsys_hw3
 
-# Create virtual environment (only if not already created)
+# create venv once
 if [ ! -d ".venv" ]; then
-    echo "Creating virtual environment..."
-    uv venv --python=3.12
+  uv venv --python=3.12
 fi
-
-# Activate virtual environment
 source .venv/bin/activate
+
+# install deps once (or when requirements change)
+if [ ! -f ".venv/.deps_installed" ]; then
+  uv pip install -r requirements.extra.txt
+  uv pip install -r requirements.txt
+  uv pip install -e .
+  touch .venv/.deps_installed
+fi
 
 # (Optional) install deps if needed
 # uv pip install -r requirements.txt
