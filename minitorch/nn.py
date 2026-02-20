@@ -106,8 +106,25 @@ def softmax(input: Tensor, dim: int) -> Tensor:
     Returns:
         softmax tensor
     """
-    e = (input - Max.apply(input, tensor([dim]))).exp()
+    # negative dim to avoid CUDA broadcast bugs
+    
+    if dim < 0:
+        dim = len(input.shape) + dim
+
+    mx = Max.apply(input, tensor([dim]))
+    # reshape mx to keep dim for broadcasting
+    mx_shape = list(input.shape)
+    mx_shape[dim] = 1
+    mx = mx.view(*mx_shape)
+
+    e = (input - mx).exp()
+
     partition = e.sum(dim=dim)
+    # reshape partition to keep dim for broadcasting
+    part_shape = list(input.shape)
+    part_shape[dim] = 1
+    partition = partition.view(*part_shape)
+
     return e / partition
 
 
@@ -211,7 +228,10 @@ def logsumexp(input: Tensor, dim: int) -> Tensor:
             NOTE: minitorch functions/tensor functions typically keep dimensions if you provide a dimensions.
     """  
     ### BEGIN ASSIGN3_1
-    raise NotImplementedError
+    max_val = Max.apply(input, tensor([dim]))
+    sum_exp = (input - max_val).exp().sum(dim=dim)
+    out = max_val + sum_exp.log()
+    return out
     ### END ASSIGN3_1
 
 
@@ -229,6 +249,10 @@ def softmax_loss(logits: Tensor, target: Tensor) -> Tensor:
     result = None
     batch_size = logits.shape[0]
     ### BEGIN ASSIGN3_1
-    raise NotImplementedError
+    log_probs = logsoftmax(logits, dim=1)
+    target_one_hot = one_hot(target, logits.shape[1])
+    loss = - (log_probs * target_one_hot).sum(dim=1)
+    result = loss
+    
     ### END ASSIGN3_1
     return result.view(batch_size,)

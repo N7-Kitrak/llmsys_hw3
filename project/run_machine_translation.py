@@ -175,7 +175,7 @@ def loss_fn(batch, model):
     """
 
     idx = batch['input_ids']
-    idx.requires_grad_(True)
+    # idx.requires_grad_(True)
     # print("getting into loss_fn")
     logits = model(idx=idx)
     # print("finish prediction")
@@ -184,7 +184,7 @@ def loss_fn(batch, model):
     targets = batch['labels'].view(bs * l)
     label_token_weights = batch['label_token_weights'].view(bs * l)
 
-    targets.requires_grad_(True)
+    # targets.requires_grad_(True)
     # print("start calculating loss")
     # import pdb
     # pdb.set_trace()
@@ -308,7 +308,20 @@ def generate(
             # run the model with current token_ids, and predict the next token (gen_id)
             # hint: obtain the logits of next token, and take the argmax.
             gen_id = 0
-            raise NotImplementedError("Generation Function Not Implemented Yet")
+            current_input_ids = minitorch.tensor_from_numpy(
+                np.array(token_ids).reshape(1, -1),
+                backend=backend
+            )
+
+            with minitorch.no_grad():
+                logits = model(idx=current_input_ids)
+
+            last_logits = logits[:, logits.shape[1] - 1, :]   # (1, vocab)
+
+            one_hot = minitorch.argmax(last_logits, dim=1)    # (1, vocab)
+            gen_id = int(one_hot.to_numpy().argmax(axis=1)[0])
+
+            
             # END ASSIGN3_4
 
             if gen_id == tokenizer.vocab[f'<eos_{tgt_key}>']:
@@ -344,8 +357,8 @@ def main(
     dataset_name='bbaaaa/iwslt14-de-en-preprocess',
     model_max_length=40,
     n_epochs=20,
-    batch_size=128,
-    learning_rate=0.02,
+    batch_size=256, #128
+    learning_rate=0.002,
     samples_per_epoch=20000,
     n_vocab=10000,
     n_embd=256,
