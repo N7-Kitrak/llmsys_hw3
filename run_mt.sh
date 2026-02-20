@@ -14,8 +14,8 @@ echo "CUDA visible devices: $CUDA_VISIBLE_DEVICES"
 module load cuda/12.4.0
 
 # Go to your project directory
-cd llmsys_hw3
-
+# cd llmsys_hw3
+bash compile_cuda.sh
 # create venv once
 if [ ! -d ".venv" ]; then
   uv venv --python=3.12
